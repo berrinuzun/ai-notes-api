@@ -7,7 +7,7 @@ from app.models.user import User
 from app.models.note import Note, NoteStatus
 import time
 import random
-from app.schemas.note import NoteResponse, NoteCreate
+from app.schemas.note import NoteResponse, NoteCreate, NoteUpdate
 from app.utils.summarizer import summarize_text
 from typing import List
 
@@ -85,4 +85,58 @@ def list_all_notes(db: Session = Depends(get_db), user: User = Depends(get_curre
         notes = db.query(Note).filter(Note.owner_id == user.id).all()
 
     return notes
+
+@router.put("/{note_id}", response_model=NoteResponse)
+def update_note(
+                note_id: int,
+                note_in: NoteUpdate,
+                background_tasks: BackgroundTasks,
+                db: Session = Depends(get_db),
+                user = Depends(get_current_user)
+):
+    
+    note = db.query(Note).filter(Note.id == note_id).first()
+
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    if user.role != "ADMIN" and note.owner_id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this note.")
+    
+    note.raw_text = note_in.raw_text
+    note.status = NoteStatus.QUEUED
+    note.summary = None
+    db.commit()
+    db.refresh(note)
+
+    background_tasks.add_task(process_note, note.id, db)
+
+    return note
+
+
+@router.delete("/{note_id}", status_code=204)
+def delete_note(
+                note_id: int,
+                db: Session = Depends(get_db),
+                user = Depends(get_current_user)
+):
+    
+    note = db.query(Note).filter(Note.id == note_id).first()
+
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    if user.role != "ADMIN" and note.owner_id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this note")
+    
+    db.delete(note)
+    db.commit()
+
+    return None
+
+
+
+
+
+
 

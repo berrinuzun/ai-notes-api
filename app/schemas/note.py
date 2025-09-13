@@ -14,3 +14,6 @@ class NoteResponse(BaseModel):
     class Config:
         orm_mode = True
 
+class NoteUpdate(BaseModel):
+    raw_text: str
+
