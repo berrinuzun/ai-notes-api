@@ -8,6 +8,8 @@ from app.models.note import Note, NoteStatus
 import time
 import random
 from app.schemas.note import NoteResponse, NoteCreate
+from app.utils.summarizer import summarize_text
+from typing import List
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 security = HTTPBearer()
@@ -27,7 +29,7 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(security), db
     return user
 
 
-def fake_summarizer(note_id: int, db: Session):
+def process_note(note_id:int, db: Session):
 
     note = db.query(Note).filter(Note.id == note_id).first()
 
@@ -37,18 +39,16 @@ def fake_summarizer(note_id: int, db: Session):
     note.status = NoteStatus.PROCESSING
     db.commit()
 
-    time.sleep(3)
-
-    if random.random() > 0.1:
-        note.summary = note.raw_text[:50] + "..."
+    try:
+        note.summary = summarize_text(note.raw_text)
         note.status = NoteStatus.DONE
-    else:
+    except Exception:
         note.status = NoteStatus.FAILED
+    finally:
+        db.commit()
 
-    db.commit()
 
-
-@router.post("/notes", response_model=NoteResponse)
+@router.post("/", response_model=NoteResponse)
 def create_note(
                 note_in: NoteCreate, 
                 background_tasks: BackgroundTasks, 
@@ -60,12 +60,12 @@ def create_note(
     db.commit()
     db.refresh(note)
 
-    background_tasks.add_task(fake_summarizer, note.id, db)
+    background_tasks.add_task(process_note, note.id, db)
 
     return note
 
 
-@router.get("/notes/{id}", response_model=NoteResponse)
+@router.get("/{note_id}", response_model=NoteResponse)
 def get_note(note_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
 
     note = db.query(Note).filter(Note.id == note_id, Note.owner_id == user.id).first()
@@ -74,4 +74,15 @@ def get_note(note_id: int, db: Session = Depends(get_db), user: User = Depends(g
         raise HTTPException(status_code=404, detail="Note not found")
     
     return note
+
+
+@router.get("/", response_model=List[NoteResponse])
+def list_all_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+
+    if user.role == "ADMIN":
+        notes = db.query(Note).all()
+    else:
+        notes = db.query(Note).filter(Note.owner_id == user.id).all()
+
+    return notes
 
