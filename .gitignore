@@ -8,3 +8,7 @@ __pycache__/
 # Optional: editor / OS files
 .vscode/
 .DS_Store
+
+migrations/*.pyc
+migrations/__pycache__/
+migrations/scripts.py.mako 

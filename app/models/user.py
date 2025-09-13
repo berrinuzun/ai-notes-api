@@ -1,6 +1,7 @@
-from database import Base
+from app.database import Base
 from sqlalchemy import Column, Integer, String, Enum, DateTime, func
 import enum
+from sqlalchemy.orm import relationship
 
 class Role(str, enum.Enum):
     ADMIN = "ADMIN"
@@ -14,3 +15,5 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(Enum(Role), default=Role.AGENT)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    notes = relationship("Note", back_populates="owner")
