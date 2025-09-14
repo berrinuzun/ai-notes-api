@@ -4,7 +4,7 @@ from app.routes import auth, notes
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AI Notes API")
+app = FastAPI(title="AI Notes API", description="Notes API with AI Summarization")
 
 app.include_router(auth.router)
 app.include_router(notes.router)

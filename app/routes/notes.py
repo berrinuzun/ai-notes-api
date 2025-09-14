@@ -32,7 +32,7 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(security), db
     return user
 
 
-def process_note(note_id:int, db: Session):
+def process_note(note_id:int):
 
     db = SessionLocal()
 
