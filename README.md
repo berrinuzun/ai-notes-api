@@ -14,7 +14,7 @@ A simple FastAPI project with user authentication, note management, and AI-power
 ```bash
 git clone <your-repo-url>
 cd ai-notes-api
-````
+```
 
 ### 2. Create a virtual environment
 
@@ -25,13 +25,11 @@ python -m venv venv
 Activate the virtual environment:
 
 * **Windows (PowerShell):**
-
 ```powershell
 venv\Scripts\Activate.ps1
 ```
 
 * **Linux/macOS:**
-
 ```bash
 source venv/bin/activate
 ```
@@ -42,7 +40,26 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 4. Preload the Summarization Model (Optional)
+
+To avoid downloading the model every time the app runs, preload it via terminal:
+
+```bash
+# Download and cache the model locally
+python -c "from transformers import pipeline; pipeline('summarization', model='sshleifer/distilbart-cnn-12-6')"
+```
+
+*By default, HuggingFace stores models in `~/.cache/huggingface/transformers`.*
+
+**Optional: Copy model cache into the project/Docker for faster container start:**
+
+```bash
+# Example: copy local cache into project folder
+cp -r ~/.cache/huggingface ./hf_cache
+```
+
+
+### 5. Configure environment variables
 
 Create a `.env` file in the project root with the following generic values:
 
@@ -59,18 +76,18 @@ DATABASE_URL=postgresql://your_postgres_user:your_postgres_password@host.docker.
 SECRET_KEY=your_secret_key_here
 ```
 
-> Note: `host.docker.internal` is required for Docker to connect to the host PostgreSQL server on Windows/macOS.
+> Note: `host.docker.internal` is required for Docker to connect to the host PostgreSQL server on Windows/macOS.  
 > Replace placeholders with your own credentials.
 
-### 5. Run the app locally
+### 6. Run the app locally
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API docs will be available at [http://localhost:8000/docs](http://localhost:8000/docs).
+API docs will be available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-### 6. Run with Docker
+### 7. Run with Docker
 
 ```bash
 docker-compose up --build
@@ -79,13 +96,10 @@ docker-compose up --build
 * App will be available at [http://localhost:8000/docs](http://localhost:8000/docs)
 * PostgreSQL container will store data in a Docker volume.
 
-### 7. Features
+### 8. Features
 
 * User signup/login with JWT authentication
 * Roles: `ADMIN` and `AGENT`
 * Notes creation, update, delete
 * Async AI summarization (optional local LLM)
 * Dockerized setup for easy deployment
-
-
-
