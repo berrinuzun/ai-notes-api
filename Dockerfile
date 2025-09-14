@@ -15,6 +15,8 @@ RUN pip install -r requirements.txt
 # Kodları kopyala
 COPY . /app
 
+COPY hf_cache /root/.cache/huggingface
+
 # Port aç
 EXPOSE 8000
 
